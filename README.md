@@ -1,56 +1,59 @@
-# Welcome to your Expo app 👋
+# Neino Note 📝
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Neino Note adalah aplikasi pencatat yang cepat, ringan, dan dirancang untuk membantu Anda mengatur ide, tugas, dan catatan harian dengan antarmuka yang bersih serta intuitif.
 
-## Get started
+## ✨ Fitur Utama
 
-1. Install dependencies
+- **Manajemen Catatan:** Buat, baca, perbarui, dan hapus catatan dengan mudah.
+- **Dukungan Markdown:** Format catatan Anda menggunakan sintaks Markdown (opsional).
+- **Pencarian Cepat:** Temukan catatan spesifik dalam hitungan detik.
+- **Mode Gelap (Dark Mode):** Nyaman digunakan di lingkungan minim cahaya.
+- **Penyimpanan Aman:** Data disimpan secara [lokal menggunakan LocalStorage / di cloud menggunakan MongoDB].
+
+## 🛠️ Teknologi yang Digunakan
+
+- **Frontend:** [React / Vue / HTML, CSS, JavaScript Vanilla]
+- **Backend:** [Node.js / Express / Python / Tidak menggunakan backend]
+- **Database:** [MongoDB / SQLite / Firebase / LocalStorage]
+
+## 🚀 Panduan Instalasi
+
+Ikuti langkah-langkah berikut untuk menjalankan Neino Note di lingkungan pengembangan lokal Anda:
+
+1. **Clone repositori ini:**
+
+   ```bash
+   git clone [https://github.com/](https://github.com/)[username-anda]/NeinoNote-app.git
+   ```
+
+2. **Masuk ke direktori proyek:**
+
+   ```bash
+   cd neino-app
+   ```
+
+3. **Instal dependensi:**
 
    ```bash
    npm install
    ```
 
-2. Start the app
-
+4. **Jalankan aplikasi:**
    ```bash
-   npx expo start
+   npm start
    ```
+   Aplikasi akan berjalan di `http://localhost:3000`.
 
-In the output, you'll find options to open the app in a
+## 🤝 Kontribusi
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Kami sangat menyambut kontribusi dari siapa saja! Jika Anda ingin menambahkan fitur baru atau memperbaiki _bug_:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Lakukan _Fork_ pada repositori ini.
+2. Buat _branch_ baru untuk fitur Anda: `git checkout -b fitur-baru-anda`
+3. Simpan perubahan Anda: `git commit -m 'Menambahkan fitur baru'`
+4. Unggah ke repositori Anda: `git push origin fitur-baru-anda`
+5. Buka _Pull Request_ di repositori ini.
 
-## Get a fresh project
+## 📄 Lisensi
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Proyek ini dilisensikan di bawah [MIT License](LICENSE) - silakan lihat file LICENSE untuk detail lebih lanjut.
