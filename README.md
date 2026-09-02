@@ -42,7 +42,13 @@ Ikuti langkah-langkah berikut untuk menjalankan Neino Note di lingkungan pengemb
    ```bash
    npm start
    ```
-   Aplikasi akan berjalan di `http://localhost:3000`.
+   Aplikasi akan berjalan
+   Anda dapat menjalankannya di aplikasi Mobile Expo Go
+5. **Install Expo Go**
+   Kamu dapat install Expo Go di : 'https://expo.dev/go'
+
+6. **Scan QR**
+   Scan QR yang tertera pada Terminal, maka aplikasi akan berjalan di Mobile anda.
 
 ## 🤝 Kontribusi
 
