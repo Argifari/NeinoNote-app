@@ -1,5 +1,7 @@
 import AddNoteIcon from "@/assets/images/addNote.svg";
 
+import { router } from "expo-router";
+
 import { COLORS, FONT_SIZES, FONTS, RADIUS, SPACING } from "@/constants/theme";
 import {
   addNote,
@@ -56,6 +58,7 @@ export default function HomeScreen() {
 
     setProjects(hasil?.project || []);
     setTasks(hasil?.tasks || []);
+    setNotes(hasil?.notes || []);
   };
 
   useEffect(() => {
@@ -107,9 +110,8 @@ export default function HomeScreen() {
       muatDataBeranda();
     }
   };
-
   const handlePressProject = (id: number, projectTitle: string) => {
-    console.log(`Pindah ke folder: ${projectTitle}`);
+    router.push(`./project/${id}`);
   };
 
   const handleDeleteFolder = (id: number) => {
