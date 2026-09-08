@@ -18,8 +18,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface TaskFormModalProps {
   visible: boolean;
-    projectId?: number | null; // 1. Tambahan prop agar modal tahu ia dibuka di mana
-    projectList?: Project[];
+  projectId?: number | null; // 1. Tambahan prop agar modal tahu ia dibuka di mana
+  projectList?: Project[];
   onClose: () => void;
   onSave: (
     title: string,
@@ -151,7 +151,7 @@ export function TaskFormModal({
                     <Text
                       style={[
                         styles.folderChipText,
-                        selectedProject === null && styles.folderChipActive,
+                        selectedProject === null && styles.folderChipTextActive,
                       ]}
                     >
                       / (Root)
