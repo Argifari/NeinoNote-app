@@ -93,6 +93,10 @@ export function getHomeData(): data {
 export function getDataInProject(idProjek: number): data {
   try {
     const dataProject: data = { project: [], tasks: [], notes: [] };
+    const folderProject = db.getAllSync<{
+      id: number;
+      projectTitle: string;
+    }>("SELECT projectTitle FROM project WHERE id = ?", [idProjek]);
     const tasks = db.getAllSync<{
       id: number;
       taskTitle: string;
@@ -107,6 +111,13 @@ export function getDataInProject(idProjek: number): data {
       noteTitle: string;
       noteText: string;
     }>("SELECT * FROM notes WHERE project_id = ? ORDER BY id DESC", [idProjek]);
+
+    folderProject.forEach((row) => {
+      dataProject.project.push({
+        id: row.id,
+        projectTitle: row.projectTitle,
+      });
+    });
 
     tasks.forEach((row) => {
       let parseTags: string[] = [];
