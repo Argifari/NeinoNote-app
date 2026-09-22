@@ -1,15 +1,6 @@
 import AddIcon from "@/assets/images/addIcon.svg";
-import {
-  addNote,
-  addTask,
-  data,
-  deleteNotes,
-  deleteTask,
-  getDataInProject,
-  updateDoneStatus,
-} from "@/database/taskQueries";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -24,74 +15,34 @@ import { NoteFormModal } from "@/components/NoteFormModal";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { COLORS, FONTS, FONT_SIZES, SPACING } from "@/constants/theme";
+import { useTaskManager } from "@/hooks/useTaskManager";
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams();
   const folderId = Number(id);
 
-  const [folderName, setFolderName] = useState("");
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [notes, setNotes] = useState<any[]>([]);
-
-  const [isTaskModalVisible, setTaskModalVisible] = useState(false);
-  const [isNoteModalVisible, setNoteModalVisible] = useState(false);
-
-  const muatDataFolder = () => {
-    const hasil: data = getDataInProject(folderId);
-
-    setFolderName(hasil.project[0]?.projectTitle ?? "");
-    setTasks(hasil?.tasks || []);
-    setNotes(hasil?.notes || []);
-  };
+  const {
+    tasks,
+    notes,
+    folderName,
+    isTaskModalVisible,
+    isNoteModalVisible,
+    editingNote,
+    setTaskModalVisible,
+    setNoteModalVisible,
+    handleCloseNoteModal,
+    refreshData,
+    handleToggleTask,
+    handleDeleteTask,
+    handleSimpanTugas,
+    handlePressNote,
+    handleDeleteNote,
+    handleSimpanNote,
+  } = useTaskManager(folderId);
 
   useEffect(() => {
-    muatDataFolder();
+    refreshData();
   }, [folderId]);
-
-  // handle tugas
-  const handleToggleTask = (id: number, currentStatus: number) => {
-    const statusBaru = currentStatus === 0 ? 1 : 0;
-
-    const berhasil = updateDoneStatus(id, statusBaru);
-    if (berhasil) {
-      muatDataFolder();
-    }
-  };
-
-  const handleDeleteTask = (id: number) => {
-    deleteTask(id);
-    muatDataFolder();
-  };
-
-  const handleSimpanTugas = (
-    judul: string,
-    tags: string[],
-    tenggat: string,
-    projek_id: number | null,
-  ) => {
-    const idBaru = addTask(judul, tags, tenggat, projek_id);
-
-    // Langsung tutup modal dan muat ulang data
-    setTaskModalVisible(false);
-    muatDataFolder();
-    console.log("Berhasil Id :", idBaru);
-  };
-  const handleSimpanNote = (
-    noteTitle: string,
-    noteText: string,
-    project_id: number | null,
-  ) => {
-    const idBaru = addNote(noteTitle, noteText, project_id);
-    if (idBaru != null) {
-      setNoteModalVisible(false);
-      muatDataFolder();
-    }
-  };
-
-  const handleDeleteNote = (id: number) => {
-    deleteNotes(id);
-    muatDataFolder();
-  };
 
   return (
     <SafeAreaView style={styles.container}>
