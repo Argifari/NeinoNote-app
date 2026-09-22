@@ -18,6 +18,7 @@ export interface NoteFormModalProps {
   projectId?: number | null; // 1. Tambahan prop agar modal tahu ia dibuka di mana
   projectList?: Project[];
   visible: boolean;
+  noteToEdit?: any | null;
   onClose: () => void;
   onSave: (
     noteTitle: string,
@@ -30,6 +31,7 @@ export function NoteFormModal({
   projectId = null,
   projectList = [],
   visible,
+  noteToEdit,
   onClose,
   onSave,
 }: NoteFormModalProps) {
@@ -39,13 +41,20 @@ export function NoteFormModal({
     projectId,
   );
 
+  // Isi form dengan data yang diedit saat modal terbuka
   useEffect(() => {
     if (visible) {
-      setNoteText("");
-      setNoteTitle("");
-      setSelectedProject(projectId);
+      if (noteToEdit) {
+        setNoteTitle(noteToEdit.noteTitle || "");
+        setNoteText(noteToEdit.noteText || "");
+        setSelectedProject(noteToEdit.project_id ?? projectId);
+      } else {
+        setNoteTitle("");
+        setNoteText("");
+        setSelectedProject(projectId);
+      }
     }
-  }, [visible]);
+  }, [visible, noteToEdit, projectId]);
 
   const handleSimpan = () => {
     if (noteTitle.trim() === "" || noteText.trim() === "") return;
@@ -66,7 +75,9 @@ export function NoteFormModal({
           <Pressable style={styles.modalContent}>
             <View>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>New Note</Text>
+                <Text style={styles.modalTitle}>
+                  {noteToEdit ? <Text>Edit Note</Text> : <Text>New Note</Text>}
+                </Text>
                 <TouchableOpacity onPress={onClose}>
                   <Text
                     style={{
