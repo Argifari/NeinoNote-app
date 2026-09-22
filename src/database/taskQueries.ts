@@ -24,288 +24,207 @@ export interface data {
   tasks: Task[];
   notes: note[];
 }
+/* ==========================================================================
+   PROJECT / FOLDER QUERIES
+   ========================================================================== */
 
-export function getHomeData(): data {
+export function getAllProjects() {
   try {
-    const homeData: data = { project: [], tasks: [], notes: [] };
-    const folderProject = db.getAllSync<{
-      id: number;
-      projectTitle: string;
-    }>("SELECT * FROM project");
-    const rootTasks = db.getAllSync<{
-      id: number;
-      taskTitle: string;
-      tags: string;
-      deadline: string;
-      doneStatus: number;
-    }>("SELECT * FROM tasks WHERE project_id IS NULL ORDER BY deadline ASC");
-
-    const rootNotes = db.getAllSync<{
-      id: number;
-      noteTitle: string;
-      noteText: string;
-    }>("SELECT * FROM notes WHERE project_id IS NULL ORDER BY id DESC");
-
-    folderProject.forEach((row) => {
-      homeData.project.push({
-        id: row.id,
-        projectTitle: row.projectTitle,
-      });
-    });
-    rootTasks.forEach((row) => {
-      let parseTags: string[] = [];
-      try {
-        if (row.tags) {
-          parseTags = JSON.parse(row.tags);
-        }
-      } catch (error) {
-        console.error(
-          "Gagal melakukan parse tag pada tugas ID",
-          row.id,
-          " :",
-          error,
-        );
-      }
-
-      homeData.tasks.push({
-        id: row.id,
-        taskTitle: row.taskTitle,
-        tags: parseTags,
-        deadline: row.deadline,
-        doneStatus: row.doneStatus,
-      });
-    });
-
-    rootNotes.forEach((row) => {
-      homeData.notes.push({
-        id: row.id,
-        noteTitle: row.noteTitle,
-        noteText: row.noteText,
-      });
-    });
-    return homeData;
+    return db.getAllSync<any>(`
+      SELECT p.*, COUNT(t.id) AS task_count
+      FROM project p
+      LEFT JOIN tasks t ON p.id = t.project_id
+      GROUP BY p.id
+      ORDER BY p.id DESC
+    `);
   } catch (error) {
-    console.error("Gagal mengambil isi beranda:", error);
-    return { project: [], tasks: [], notes: [] };
+    console.error("Gagal mengambil daftar folder:", error);
+    return [];
   }
 }
 
-export function getDataInProject(idProjek: number): data {
+export function getFolderData(projectId: number) {
   try {
-    const dataProject: data = { project: [], tasks: [], notes: [] };
-    const folderProject = db.getAllSync<{
-      id: number;
-      projectTitle: string;
-    }>("SELECT projectTitle FROM project WHERE id = ?", [idProjek]);
-    const tasks = db.getAllSync<{
-      id: number;
-      taskTitle: string;
-      tags: string;
-      deadline: string;
-      doneStatus: number;
-    }>("SELECT * FROM tasks WHERE project_id = ? ORDER BY deadline ASC", [
-      idProjek,
+    const data: { project: any; tasks: any[]; notes: any[] } = {
+      project: null,
+      tasks: [],
+      notes: [],
+    };
+
+    // 1. Ambil info folder
+    data.project = db.getFirstSync<any>("SELECT * FROM project WHERE id = ?", [
+      projectId,
     ]);
-    const notes = db.getAllSync<{
-      id: number;
-      noteTitle: string;
-      noteText: string;
-    }>("SELECT * FROM notes WHERE project_id = ? ORDER BY id DESC", [idProjek]);
 
-    folderProject.forEach((row) => {
-      dataProject.project.push({
-        id: row.id,
-        projectTitle: row.projectTitle,
-      });
-    });
+    // 2. Ambil tugas dalam folder ini
+    const rawTasks = db.getAllSync<any>(
+      "SELECT * FROM tasks WHERE project_id = ? ORDER BY isDone ASC, deadline ASC",
+      [projectId],
+    );
 
-    tasks.forEach((row) => {
+    data.tasks = rawTasks.map((row) => {
       let parseTags: string[] = [];
       try {
-        if (row.tags) {
-          parseTags = JSON.parse(row.tags);
-        }
-      } catch (error) {
-        console.error(
-          "Gagal melakukan parse tag pada tugas ID",
-          row.id,
-          " :",
-          error,
-        );
-      }
-
-      dataProject.tasks.push({
-        id: row.id,
-        taskTitle: row.taskTitle,
+        if (row.tags) parseTags = JSON.parse(row.tags);
+      } catch (e) {}
+      return {
+        ...row,
         tags: parseTags,
-        deadline: row.deadline,
-        doneStatus: row.doneStatus,
-      });
-    });
-    notes.forEach((row) => {
-      dataProject.notes.push({
-        id: row.id,
-        noteTitle: row.noteTitle,
-        noteText: row.noteText,
-      });
+      };
     });
 
-    return dataProject;
+    // 3. Ambil catatan dalam folder ini
+    data.notes = db.getAllSync<any>(
+      "SELECT * FROM notes WHERE project_id = ? ORDER BY id DESC",
+      [projectId],
+    );
+
+    return data;
   } catch (error) {
-    console.error("Gagal mengambil isi projek:", error);
-    return { project: [], tasks: [], notes: [] };
+    console.error("Gagal mengambil data folder:", error);
+    return null;
   }
 }
 
-// Di dalam file taskQueries.ts
+export function addProject(projectTitle: string) {
+  try {
+    db.runSync("INSERT INTO project (projectTitle) VALUES (?)", [projectTitle]);
+    return true;
+  } catch (error) {
+    console.error("Gagal menambahkan folder:", error);
+    return false;
+  }
+}
+
+export function deleteProject(id: number) {
+  try {
+    db.runSync("DELETE FROM project WHERE id = ?", [id]);
+    return true;
+  } catch (error) {
+    console.error("Gagal menghapus folder:", error);
+    return false;
+  }
+}
+
+/* ==========================================================================
+   TASK QUERIES
+   ========================================================================== */
+
+export function getAllTasks() {
+  try {
+    const rawTasks = db.getAllSync<any>(
+      "SELECT * FROM tasks ORDER BY isDone ASC, deadline ASC",
+    );
+
+    return rawTasks.map((row) => {
+      let parseTags: string[] = [];
+      try {
+        if (row.tags) parseTags = JSON.parse(row.tags);
+      } catch (e) {}
+      return {
+        ...row,
+        tags: parseTags,
+      };
+    });
+  } catch (error) {
+    console.error("Gagal mengambil semua tugas:", error);
+    return [];
+  }
+}
+
 export function addTask(
   title: string,
-  array_tags: string[],
+  tags: string[],
   deadline: string,
   project_id: number | null,
-): number | null {
-  const textTags = JSON.stringify(array_tags);
+) {
   try {
-    let idBaru = 0;
-    db.withTransactionSync(() => {
-      const hasil = db.runSync(
-        "INSERT INTO tasks (taskTitle, tags, deadline, project_id) VALUES (?, ?, ?, ?)",
-        [title, textTags, deadline, project_id],
-      );
-      idBaru = hasil.lastInsertRowId;
-    });
-    return idBaru;
+    const tagsJson = JSON.stringify(tags || []);
+    db.runSync(
+      "INSERT INTO tasks (title, tags, deadline, isDone, project_id) VALUES (?, ?, ?, 0, ?)",
+      [title, tagsJson, deadline, project_id],
+    );
+    return true;
   } catch (error) {
-    // 🔴 TAMBAHKAN BARIS INI UNTUK MELIHAT PENYEBAB ASLINYA
-    console.error("Gagal menambahkan tugas ke SQLite:", error);
-    return null;
+    console.error("Gagal menambahkan tugas:", error);
+    return false;
   }
 }
 
-export function addProject(title: string): number | null {
+export function updateDoneStatus(id: number, isDone: number) {
   try {
-    let idBaru = 0;
-    db.withTransactionSync(() => {
-      const hasil = db.runSync(
-        "INSERT INTO project (projectTitle) VALUES (?)",
-        [title],
-      );
-      idBaru = hasil.lastInsertRowId;
-    });
-    return idBaru;
+    db.runSync("UPDATE tasks SET isDone = ? WHERE id = ?", [isDone, id]);
+    return true;
   } catch (error) {
-    return null;
+    console.error("Gagal memperbarui status tugas:", error);
+    return false;
+  }
+}
+
+export function deleteTask(id: number) {
+  try {
+    db.runSync("DELETE FROM tasks WHERE id = ?", [id]);
+    return true;
+  } catch (error) {
+    console.error("Gagal menghapus tugas:", error);
+    return false;
+  }
+}
+
+/* ==========================================================================
+   NOTE QUERIES
+   ========================================================================== */
+
+export function getAllNotes() {
+  try {
+    return db.getAllSync<any>("SELECT * FROM notes ORDER BY id DESC");
+  } catch (error) {
+    console.error("Gagal mengambil semua catatan:", error);
+    return [];
   }
 }
 
 export function addNote(
   noteTitle: string,
   noteText: string,
-  projectId: number | null,
-): number | null {
+  project_id: number | null,
+) {
   try {
-    let idBaru = 0;
-    db.withTransactionSync(() => {
-      const hasil = db.runSync(
-        "INSERT INTO notes (noteTitle, noteText, project_id) VALUES (?, ?, ?)",
-        [noteTitle, noteText, projectId],
-      );
-      idBaru = hasil.lastInsertRowId;
-    });
-    return idBaru;
-  } catch (error) {
-    return null;
-  }
-}
-
-export function getTask(): Task[] {
-  const cleanData: Task[] = [];
-
-  try {
-    const hasil = db.getAllSync<{
-      id: number;
-      taskTitle: string;
-      tags: string;
-      deadline: string;
-      doneStatus: number;
-    }>("SELECT * FROM tasks ORDER BY deadline ASC");
-
-    hasil.forEach((row) => {
-      let parseTags: string[] = [];
-      try {
-        if (row.tags) {
-          parseTags = JSON.parse(row.tags);
-        }
-      } catch (error) {
-        console.error(
-          "Gagal melakukan parse tag pada tugas ID",
-          row.id,
-          " :",
-          error,
-        );
-      }
-
-      cleanData.push({
-        id: row.id,
-        taskTitle: row.taskTitle,
-        tags: parseTags,
-        deadline: row.deadline,
-        doneStatus: row.doneStatus,
-      });
-    });
-
-    return cleanData;
-  } catch (error) {
-    console.error("Gagal mengambil tugas :", error);
-    return [];
-  }
-}
-
-export function updateDoneStatus(id: number, newStatus: number): boolean {
-  try {
-    db.withTransactionSync(() => {
-      const update = db.runSync(
-        "UPDATE tasks SET doneStatus = ? WHERE id = ?",
-        [newStatus, id],
-      );
-    });
-    console.log(`Berhasil : Status Task ID ${id} diubah menjadi ${newStatus}`);
+    db.runSync(
+      "INSERT INTO notes (noteTitle, noteText, project_id) VALUES (?, ?, ?)",
+      [noteTitle, noteText, project_id],
+    );
     return true;
   } catch (error) {
-    console.error(`Gagal memperbarui status Task ID ${id}:`, error);
+    console.error("Gagal menambahkan catatan:", error);
     return false;
   }
 }
 
-export function deleteTask(id: number): boolean {
+export function updateNote(
+  id: number,
+  noteTitle: string,
+  noteText: string,
+  project_id: number | null,
+) {
   try {
-    db.runSync("DELETE FROM tasks WHERE id = ?", [id]);
-    console.log(`Berhasil : Task ID ${id} dihapus`);
+    db.runSync(
+      "UPDATE notes SET noteTitle = ?, noteText = ?, project_id = ? WHERE id = ?",
+      [noteTitle, noteText, project_id, id],
+    );
     return true;
   } catch (error) {
-    console.error(`Gagal menghapus Task ID ${id} :`, error);
+    console.error("Gagal memperbarui catatan:", error);
     return false;
   }
 }
 
-export function deleteNotes(id: number): boolean {
+export function deleteNote(id: number) {
   try {
-    db.runSync("DELETE FROM note WHERE id = ?", [id]);
-    console.log(`Berhasil : Note ID ${id} dihapus`);
+    db.runSync("DELETE FROM notes WHERE id = ?", [id]);
     return true;
   } catch (error) {
-    console.error(`Gagal menghapus note ID ${id} :`, error);
-    return false;
-  }
-}
-
-export function deleteProject(id: number): boolean {
-  try {
-    db.runSync("DELETE FROM project WHERE id = ?", [id]);
-    console.log(`Berhasil : Folder ID ${id} dihapus`);
-    return true;
-  } catch (error) {
-    console.error(`Gagal menghapus Folder ID ${id} :`, error);
+    console.error("Gagal menghapus catatan:", error);
     return false;
   }
 }
