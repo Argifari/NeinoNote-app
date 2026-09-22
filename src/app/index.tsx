@@ -1,27 +1,13 @@
 import AddNoteIcon from "@/assets/images/addNote.svg";
 
-import { router } from "expo-router";
-
 import { COLORS, FONT_SIZES, FONTS, RADIUS, SPACING } from "@/constants/theme";
-import {
-  addNote,
-  addProject,
-  addTask,
-  data,
-  deleteNotes,
-  deleteProject,
-  deleteTask,
-  getHomeData,
-  Project,
-  updateDoneStatus,
-} from "@/database/taskQueries";
 import {
   Inter_400Regular,
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -38,6 +24,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectFormModal } from "@/components/ProjectFormModal";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskFormModal } from "@/components/TaskFormModal";
+import { useTaskManager } from "@/hooks/useTaskManager";
 SplashScreen.preventAutoHideAsync();
 
 export default function HomeScreen() {
@@ -45,96 +32,38 @@ export default function HomeScreen() {
     Inter_400Regular,
     Inter_700Bold,
   });
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [notes, setNotes] = useState<any[]>([]);
+  const {
+    tasks,
+    notes,
+    projects,
+    folderName,
+    isProjectModalVisible,
+    isTaskModalVisible,
+    isNoteModalVisible,
+    editingNote,
 
-  const [isTaskModalVisible, setTaskModalVisible] = useState(false);
-  const [isProjectModalVisible, setProjectModalVisible] = useState(false);
-  const [isNoteModalVisible, setNoteModalVisible] = useState(false);
+    // Modal Setters
+    setProjectModalVisible,
+    setTaskModalVisible,
+    setNoteModalVisible,
+    handleCloseNoteModal,
 
-  const muatDataBeranda = () => {
-    const hasil: data = getHomeData();
-
-    setProjects(hasil?.project || []);
-    setTasks(hasil?.tasks || []);
-    setNotes(hasil?.notes || []);
-  };
+    // Handlers
+    refreshData,
+    handleSimpanProject,
+    handlePressProject,
+    handleDeleteFolder,
+    handleToggleTask,
+    handleDeleteTask,
+    handleSimpanTugas,
+    handlePressNote,
+    handleDeleteNote,
+    handleSimpanNote,
+  } = useTaskManager(null);
 
   useEffect(() => {
-    if (fontsLoaded) {
-      muatDataBeranda();
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  // handle tugas
-  const handleToggleTask = (id: number, currentStatus: number) => {
-    const statusBaru = currentStatus === 0 ? 1 : 0;
-
-    const berhasil = updateDoneStatus(id, statusBaru);
-    if (berhasil) {
-      muatDataBeranda();
-    }
-  };
-
-  const handleDeleteTask = (id: number) => {
-    deleteTask(id);
-    muatDataBeranda();
-  };
-
-  const handleSimpanTugas = (
-    judul: string,
-    tags: string[],
-    tenggat: string,
-    projek_id: number | null,
-  ) => {
-    const idBaru = addTask(judul, tags, tenggat, projek_id);
-
-    // Langsung tutup modal dan muat ulang data
-    setTaskModalVisible(false);
-    muatDataBeranda();
-    console.log("Berhasil Id :", idBaru);
-  };
-
-  // handler project
-  const handleSimpanProject = (judul: string) => {
-    const berhasil = addProject(judul);
-
-    if (berhasil != null) {
-      setTaskModalVisible(false);
-      muatDataBeranda();
-    }
-  };
-  const handlePressProject = (id: number, projectTitle: string) => {
-    router.push(`./project/${id}`);
-  };
-
-  const handleDeleteFolder = (id: number) => {
-    deleteProject(id);
-    muatDataBeranda();
-  };
-
-  const handleSimpanNote = (
-    noteTitle: string,
-    noteText: string,
-    project_id: number | null,
-  ) => {
-    const idBaru = addNote(noteTitle, noteText, project_id);
-    if (idBaru != null) {
-      setNoteModalVisible(false);
-      muatDataBeranda();
-    }
-  };
-
-  const handleDeleteNote = (id: number) => {
-    deleteNotes(id);
-    muatDataBeranda();
-  };
+    refreshData();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -235,7 +164,7 @@ export default function HomeScreen() {
               <NoteCard
                 key={note.id}
                 note={note}
-                onPress={handlePressProject}
+                onPress={handlePressNote}
                 onDelete={handleDeleteNote}
               />
             ))}
@@ -258,6 +187,7 @@ export default function HomeScreen() {
       />
       <NoteFormModal
         visible={isNoteModalVisible}
+        noteToEdit={editingNote}
         projectId={null}
         projectList={projects}
         onClose={() => setNoteModalVisible(false)}
