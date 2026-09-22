@@ -3,7 +3,7 @@ import { note } from "@/database/taskQueries";
 import { Alert, StyleSheet, Text, TouchableOpacity } from "react-native";
 interface NoteCardProps {
   note: note;
-  onPress: (id: number, namaFolder: string) => void;
+  onPress: (note: any) => void;
   onDelete: (id: number) => void;
 }
 
@@ -25,7 +25,7 @@ export function NoteCard({ note, onPress, onDelete }: NoteCardProps) {
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => onPress(note.id, note.noteTitle)}
+      onPress={() => onPress && onPress(note)}
       onLongPress={handleLongPress}
       activeOpacity={0.7}
     >
