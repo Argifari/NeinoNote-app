@@ -158,7 +158,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Shortcuts</Text>
           <TouchableOpacity
             style={styles.shortcutCard}
-            onPress={() => handleOpenNewNote}
+            onPress={handleOpenNewNote}
           >
             <AddNoteIcon height={20} width={20} />
             <Text style={styles.shortcutText}>+ New Note</Text>
@@ -200,7 +200,7 @@ export default function HomeScreen() {
         noteToEdit={editingNote}
         projectId={null}
         projectList={projects}
-        onClose={() => handleCloseNoteModal}
+        onClose={handleCloseNoteModal}
         onSave={handleSimpanNote}
       />
     </SafeAreaView>
