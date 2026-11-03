@@ -27,7 +27,6 @@ export default function ProjectDetailScreen() {
     folderName,
     isTaskModalVisible,
     isNoteModalVisible,
-    editingNote,
     setTaskModalVisible,
     setNoteModalVisible,
     handleCloseNoteModal,
@@ -38,6 +37,7 @@ export default function ProjectDetailScreen() {
     handlePressNote,
     handleDeleteNote,
     handleSimpanNote,
+    handleOpenNewNote,
   } = useTaskManager(folderId);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function ProjectDetailScreen() {
           <View style={(styles.section, { paddingBottom: 40 })}>
             <View style={[styles.sectionHeader, { gap: 8 }]}>
               <Text style={styles.sectionTitle}>Folder Notes</Text>
-              <TouchableOpacity onPress={() => setNoteModalVisible(true)}>
+              <TouchableOpacity onPress={() => handleOpenNewNote}>
                 <AddIcon width={20} height={20} />
               </TouchableOpacity>
             </View>
@@ -101,7 +101,7 @@ export default function ProjectDetailScreen() {
                 <NoteCard
                   key={note.id}
                   note={note}
-                  onPress={() => console.log("Masuk ke note :", note.id)}
+                  onPress={handlePressNote}
                   onDelete={handleDeleteNote}
                 />
               ))
@@ -122,7 +122,7 @@ export default function ProjectDetailScreen() {
         visible={isNoteModalVisible}
         projectId={folderId}
         projectList={[{ id: folderId, projectTitle: folderName }]}
-        onClose={() => setNoteModalVisible(false)}
+        onClose={handleCloseNoteModal}
         onSave={handleSimpanNote}
       />
     </SafeAreaView>
