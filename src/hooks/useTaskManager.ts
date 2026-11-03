@@ -1,16 +1,16 @@
 import {
-    addNote,
-    addProject,
-    addTask,
-    deleteNote,
-    deleteProject,
-    deleteTask,
-    getAllNotes,
-    getAllProjects,
-    getAllTasks,
-    getFolderData,
-    updateDoneStatus,
-    updateNote,
+  addNote,
+  addProject,
+  addTask,
+  deleteNote,
+  deleteProject,
+  deleteTask,
+  getAllNotes,
+  getAllProjects,
+  getAllTasks,
+  getFolderData,
+  updateDoneStatus,
+  updateNote,
 } from "@/database/taskQueries";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -119,6 +119,10 @@ export function useTaskManager(projectId: number | null = null) {
     setEditingNote(null);
     setNoteModalVisible(false);
   };
+  const handleOpenNewNote = () => {
+    setEditingNote(null);
+    setNoteModalVisible(true);
+  };
 
   return {
     // States
@@ -148,5 +152,6 @@ export function useTaskManager(projectId: number | null = null) {
     handlePressNote,
     handleDeleteNote,
     handleSimpanNote,
+    handleOpenNewNote,
   };
 }
