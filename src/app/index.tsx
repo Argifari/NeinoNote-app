@@ -36,7 +36,6 @@ export default function HomeScreen() {
     tasks,
     notes,
     projects,
-    folderName,
     isProjectModalVisible,
     isTaskModalVisible,
     isNoteModalVisible,
@@ -45,7 +44,6 @@ export default function HomeScreen() {
     // Modal Setters
     setProjectModalVisible,
     setTaskModalVisible,
-    setNoteModalVisible,
     handleCloseNoteModal,
 
     // Handlers
@@ -59,10 +57,22 @@ export default function HomeScreen() {
     handlePressNote,
     handleDeleteNote,
     handleSimpanNote,
+    handleOpenNewNote,
   } = useTaskManager(null);
 
   useEffect(() => {
-    refreshData();
+    async function initApp() {
+      try {
+        refreshData(); // Muat data dari SQLite
+      } catch (error) {
+        console.error("Gagal muat data awal:", error);
+      } finally {
+        // ✅ SEMBUNYIKAN LOGO NEINO
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    initApp();
   }, []);
 
   return (
@@ -148,7 +158,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Shortcuts</Text>
           <TouchableOpacity
             style={styles.shortcutCard}
-            onPress={() => setNoteModalVisible(true)}
+            onPress={() => handleOpenNewNote}
           >
             <AddNoteIcon height={20} width={20} />
             <Text style={styles.shortcutText}>+ New Note</Text>
@@ -190,7 +200,7 @@ export default function HomeScreen() {
         noteToEdit={editingNote}
         projectId={null}
         projectList={projects}
-        onClose={() => setNoteModalVisible(false)}
+        onClose={() => handleCloseNoteModal}
         onSave={handleSimpanNote}
       />
     </SafeAreaView>
