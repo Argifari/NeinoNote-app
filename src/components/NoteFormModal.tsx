@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -40,6 +39,8 @@ export function NoteFormModal({
   const [selectedProject, setSelectedProject] = useState<number | null>(
     projectId,
   );
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   // Isi form dengan data yang diedit saat modal terbuka
   useEffect(() => {
@@ -53,205 +54,378 @@ export function NoteFormModal({
         setNoteText("");
         setSelectedProject(projectId);
       }
+      setShowFolderPicker(false);
     }
   }, [visible, noteToEdit, projectId]);
+
+  const applyFormatting = (prefix: string, suffix: string = "") => {
+    const { start, end } = selection;
+
+    const before = noteText.substring(0, start);
+    const selectedText = noteText.substring(start, end);
+    const after = noteText.substring(end);
+
+    const newText = `${before}${prefix}${selectedText}${suffix}${after}`;
+    setNoteText(newText);
+  };
 
   const handleSimpan = () => {
     if (noteTitle.trim() === "" || noteText.trim() === "") return;
     onSave(noteTitle, noteText, selectedProject);
   };
+  // Mendapatkan nama folder aktif
+  const getSelectedFolderName = () => {
+    if (selectedProject === null) return "Root Folder";
+    const found = projectList.find((p) => p.id === selectedProject);
+    return found ? found.projectTitle : "Folder";
+  };
   return (
     <Modal
       visible={visible}
-      transparent={true}
       animationType="slide"
-      onRequestClose={onClose}
+      presentationStyle="fullScreen"
     >
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <Pressable style={styles.modalOverlay} onPress={onClose}>
-          <Pressable style={styles.modalContent}>
-            <View>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {noteToEdit ? <Text>Edit Note</Text> : <Text>New Note</Text>}
-                </Text>
-                <TouchableOpacity onPress={onClose}>
-                  <Text
-                    style={{
-                      color: COLORS.neutral,
-                      fontSize: FONT_SIZES.large,
-                    }}
-                  >
-                    X
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                style={styles.inputForm}
-                placeholder="Note Title"
-                placeholderTextColor="#555"
-                value={noteTitle}
-                onChangeText={setNoteTitle}
-              />
-              <TextInput
-                style={[
-                  styles.inputForm,
-                  { height: 120, textAlignVertical: "top" },
-                ]}
-                placeholder="Typing . . ."
-                placeholderTextColor="#555"
-                value={noteText}
-                onChangeText={setNoteText}
-                multiline={true}
-              />
-              {/** List Pilihan Folder */}
-              <Text style={styles.labelSection}>Save to Folder:</Text>
-              <View style={styles.folderListContainer}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingRight: SPACING.large }}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.folderChip,
-                      selectedProject === null && styles.folderChipActive,
-                    ]}
-                    onPress={() => setSelectedProject(null)}
-                  >
-                    <Text
-                      style={[
-                        styles.folderChipText,
-                        selectedProject === null && styles.folderChipTextActive,
-                      ]}
-                    >
-                      / (Root)
-                    </Text>
-                  </TouchableOpacity>
-                  {projectList.map((project) => (
-                    <TouchableOpacity
-                      key={project.id}
-                      style={[
-                        styles.folderChip,
-                        selectedProject === project.id &&
-                          styles.folderChipActive,
-                      ]}
-                      onPress={() => setSelectedProject(project.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.folderChipText,
-                          selectedProject === project.id &&
-                            styles.folderChipActive,
-                        ]}
-                      >
-                        {project.projectTitle}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+        {/* 1. TOP ACTION BAR */}
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Text style={styles.backText}>‹ Kembali</Text>
+          </TouchableOpacity>
+
+          <View style={styles.topRightActions}>
+            <TouchableOpacity
+              style={[
+                styles.btnSimpanHeader,
+                !noteTitle.trim() &&
+                  !noteText.trim() &&
+                  styles.btnSimpanDisabled,
+              ]}
+              onPress={handleSimpan}
+              disabled={!noteTitle.trim() && !noteText.trim()}
+            >
+              <Text style={styles.btnSimpanText}>
+                {noteToEdit ? "Simpan" : "Selesai"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 2. SUB-HEADER: FOLDER DROPDOWN & METADATA */}
+        <View style={styles.subHeader}>
+          <TouchableOpacity
+            style={styles.folderSelector}
+            onPress={() => setShowFolderPicker(!showFolderPicker)}
+          >
+            <Text style={styles.folderIcon}>📁</Text>
+            <Text style={styles.folderName}>{getSelectedFolderName()}</Text>
+            <Text style={styles.dropdownArrow}>
+              {showFolderPicker ? "▲" : "▼"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* INLINE FOLDER PICKER DROPDOWN */}
+        {showFolderPicker && (
+          <View style={styles.pickerDropdownContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <TouchableOpacity
                 style={[
-                  styles.btnSimpan,
-                  (noteTitle.trim() === "" || noteText.trim() === "") &&
-                    styles.btnSimpanDisable,
+                  styles.chipFolder,
+                  selectedProject === null && styles.chipFolderActive,
                 ]}
-                onPress={handleSimpan}
-                disabled={noteTitle.trim() === "" || noteText.trim() === ""}
+                onPress={() => {
+                  setSelectedProject(null);
+                  setShowFolderPicker(false);
+                }}
               >
-                <Text style={styles.btnSimpanText}>Save Note</Text>
+                <Text
+                  style={[
+                    styles.chipFolderText,
+                    selectedProject === null && styles.chipFolderTextActive,
+                  ]}
+                >
+                  / Root
+                </Text>
               </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
+
+              {projectList.map((p) => (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[
+                    styles.chipFolder,
+                    selectedProject === p.id && styles.chipFolderActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedProject(p.id);
+                    setShowFolderPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.chipFolderText,
+                      selectedProject === p.id && styles.chipFolderTextActive,
+                    ]}
+                  >
+                    {p.projectTitle}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 3. EDITOR AREA (TITLE & BODY) */}
+        <ScrollView
+          style={styles.editorScroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Judul Catatan..."
+            placeholderTextColor="#444"
+            value={noteTitle}
+            onChangeText={setNoteTitle}
+            multiline={true}
+          />
+
+          <TextInput
+            style={styles.bodyInput}
+            placeholder="Mulai mengetik catatan di sini..."
+            placeholderTextColor="#333"
+            value={noteText}
+            onChangeText={setNoteText}
+            multiline={true}
+            textAlignVertical="top"
+            onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+          />
+        </ScrollView>
+
+        {/* 4. FORMATTING TOOLBAR (STICKY BOTTOM) */}
+
+        {/* Header / Sub-judul Markdown (# Teks) */}
+        <View style={styles.formattingToolbar}>
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("\n#")}
+          >
+            <Text style={styles.toolTextBold}>T</Text>
+          </TouchableOpacity>
+
+          {/**Bullet List (-Text) */}
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("\n-")}
+          >
+            <Text style={styles.toolText}>≔</Text>
+          </TouchableOpacity>
+
+          {/**Underline (<u>Teks</u>)*/}
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("<u>", "</u>")}
+          >
+            <Text
+              style={[styles.toolText, { textDecorationLine: "underline" }]}
+            >
+              U
+            </Text>
+
+            {/**Italic (*Text*) */}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("*", "*")}
+          >
+            <Text style={[styles.toolText, { fontStyle: "italic" }]}>I</Text>
+          </TouchableOpacity>
+
+          {/* Bold (**Text**) */}
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("**", "**")}
+          >
+            <Text style={styles.toolTextBold}>B</Text>
+          </TouchableOpacity>
+
+          {/* Strikethrough (~~Text~~) */}
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={() => applyFormatting("~~", "~~")}
+          >
+            <Text
+              style={[styles.toolText, { textDecorationLine: "line-through" }]}
+            >
+              S
+            </Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.round * 2,
-    borderTopRightRadius: RADIUS.round * 2,
-    padding: SPACING.large,
-    paddingBottom: 40,
-    borderTopWidth: 2,
-    borderColor: COLORS.secondary,
+    paddingTop: Platform.OS === "ios" ? 50 : 20,
   },
-  modalHeader: {
+  // Top Bar
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: SPACING.large,
+    paddingHorizontal: SPACING.medium,
+    paddingVertical: SPACING.small,
   },
-  modalTitle: { color: COLORS.neutral, fontSize: 16, fontFamily: FONTS.bold },
-  inputForm: {
-    backgroundColor: "#111",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.round,
-    padding: SPACING.medium,
-    color: COLORS.neutral,
-    fontFamily: FONTS.regular,
+  backButton: {
+    padding: SPACING.small,
+  },
+  backText: {
+    color: COLORS.gray,
+    fontFamily: FONTS.bold,
     fontSize: FONT_SIZES.large,
-    marginBottom: SPACING.large,
   },
-  btnSimpan: {
-    backgroundColor: COLORS.primary,
-    padding: SPACING.medium,
-    borderRadius: RADIUS.round,
+  topRightActions: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 12,
   },
-  btnSimpanDisable: { backgroundColor: "#333" },
+  iconActionBtn: {
+    padding: 6,
+  },
+  iconActionText: {
+    fontSize: 18,
+  },
+  btnSimpanHeader: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: RADIUS.round,
+  },
+  btnSimpanDisabled: {
+    backgroundColor: "#222",
+  },
   btnSimpanText: {
     color: "#000",
     fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.large,
+    fontSize: FONT_SIZES.medium,
   },
-
-  // GAYA BARU UNTUK FOLDER CHIPS
-  labelSection: {
+  // Sub Header
+  subHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: SPACING.medium,
+    marginVertical: SPACING.small,
+  },
+  folderSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.round,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 6,
+  },
+  folderIcon: {
+    fontSize: 14,
+  },
+  folderName: {
     color: COLORS.neutral,
     fontFamily: FONTS.bold,
     fontSize: FONT_SIZES.small,
-    marginBottom: 8,
-    marginLeft: 4,
   },
-  folderListContainer: {
-    height: 45,
-    marginBottom: SPACING.large,
+  dropdownArrow: {
+    color: COLORS.gray,
+    fontSize: 10,
   },
-  folderChip: {
+  metaIcons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  metaBtn: {
+    padding: 4,
+  },
+  metaIconText: {
+    fontSize: 16,
+  },
+  // Picker Dropdown
+  pickerDropdownContainer: {
+    paddingHorizontal: SPACING.medium,
+    marginBottom: SPACING.small,
+  },
+  chipFolder: {
     backgroundColor: "#111",
     borderWidth: 1,
     borderColor: COLORS.border,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: RADIUS.round,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
+    marginRight: 8,
   },
-  folderChipActive: {
+  chipFolderActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
-  folderChipText: {
-    color: COLORS.neutral,
+  chipFolderText: {
+    color: COLORS.gray,
     fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
   },
-  folderChipTextActive: {
+  chipFolderTextActive: {
     color: "#000",
     fontFamily: FONTS.bold,
+  },
+  // Editor
+  editorScroll: {
+    flex: 1,
+    paddingHorizontal: SPACING.large,
+    marginTop: SPACING.small,
+  },
+  titleInput: {
+    color: COLORS.neutral,
+    fontFamily: FONTS.bold,
+    fontSize: 26,
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  bodyInput: {
+    color: "#d4d4d8",
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.large,
+    lineHeight: 24,
+    minHeight: 250,
+  },
+  // Formatting Toolbar
+  formattingToolbar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  toolBtn: {
+    padding: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 32,
+  },
+  toolText: {
+    color: COLORS.neutral,
+    fontSize: 18,
+  },
+  toolTextBold: {
+    color: COLORS.neutral,
+    fontFamily: FONTS.bold,
+    fontSize: 18,
   },
 });
