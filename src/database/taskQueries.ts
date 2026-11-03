@@ -58,7 +58,7 @@ export function getFolderData(projectId: number) {
 
     // 2. Ambil tugas dalam folder ini
     const rawTasks = db.getAllSync<any>(
-      "SELECT * FROM tasks WHERE project_id = ? ORDER BY isDone ASC, deadline ASC",
+      "SELECT * FROM tasks WHERE project_id = ? ORDER BY doneStatus ASC, deadline ASC",
       [projectId],
     );
 
@@ -113,7 +113,7 @@ export function deleteProject(id: number) {
 export function getAllTasks() {
   try {
     const rawTasks = db.getAllSync<any>(
-      "SELECT * FROM tasks ORDER BY isDone ASC, deadline ASC",
+      "SELECT * FROM tasks ORDER BY doneStatus ASC, deadline ASC",
     );
 
     return rawTasks.map((row) => {
@@ -141,7 +141,7 @@ export function addTask(
   try {
     const tagsJson = JSON.stringify(tags || []);
     db.runSync(
-      "INSERT INTO tasks (title, tags, deadline, isDone, project_id) VALUES (?, ?, ?, 0, ?)",
+      "INSERT INTO tasks (title, tags, deadline, doneStatus, project_id) VALUES (?, ?, ?, 0, ?)",
       [title, tagsJson, deadline, project_id],
     );
     return true;
@@ -151,9 +151,12 @@ export function addTask(
   }
 }
 
-export function updateDoneStatus(id: number, isDone: number) {
+export function updateDoneStatus(id: number, doneStatus: number) {
   try {
-    db.runSync("UPDATE tasks SET isDone = ? WHERE id = ?", [isDone, id]);
+    db.runSync("UPDATE tasks SET doneStatus = ? WHERE id = ?", [
+      doneStatus,
+      id,
+    ]);
     return true;
   } catch (error) {
     console.error("Gagal memperbarui status tugas:", error);
